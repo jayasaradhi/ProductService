@@ -31,8 +31,14 @@ public class SelfProductService implements ProductService {
     }
 
     @Override
-    public List<Product> getProducts() {
-        return productRepository.findAll();
+    public List<Product> getProducts() throws ProductNotFoundException {
+        List<Product> products = productRepository.findAll();
+
+        if (products.isEmpty()) {
+            throw new ProductNotFoundException("No products found");
+        }
+
+        return products;
     }
 
     @Override

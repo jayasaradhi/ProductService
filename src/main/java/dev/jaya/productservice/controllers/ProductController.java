@@ -35,7 +35,7 @@ public class ProductController {
     }
 
     @GetMapping("/products")
-    public List<Product> getAllProducts(){
+    public List<Product> getAllProducts() throws ProductNotFoundException{
         return productService.getProducts();
     }
 
@@ -47,7 +47,7 @@ public class ProductController {
     @PutMapping("/products/{id}")
     public Product updateProduct(@PathVariable("id") Long productId,
                                  @RequestBody CreateProductRequestDto request) throws ProductNotFoundException {
-        return ((FakeStoreProductService) productService).updateProduct(
+        return productService.updateProduct(
                 productId,
                 request.getTitle(),
                 request.getDescription(),

@@ -32,7 +32,7 @@ public class FakeStoreProductService implements ProductService {
     }
 
     @Override
-    public List<Product> getProducts() {
+    public List<Product> getProducts() throws ProductNotFoundException{
         FakeStoreProductDto[] products = restTemplate.getForObject(
                 "https://fakestoreapi.com/products",
                 FakeStoreProductDto[].class
