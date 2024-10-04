@@ -5,8 +5,13 @@ import dev.jaya.productservice.models.Category;
 import dev.jaya.productservice.models.Product;
 import dev.jaya.productservice.repositories.CategoryRepository;
 import dev.jaya.productservice.repositories.ProductRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,24 +20,32 @@ public class SelfProductService implements ProductService {
 
     private ProductRepository productRepository;
     private CategoryRepository categoryRepository;
+    private RedisTemplate redisTemplate;
 
-    public SelfProductService(ProductRepository productRepository, CategoryRepository categoryRepository) {
+    public SelfProductService(ProductRepository productRepository, CategoryRepository categoryRepository, RedisTemplate redisTemplate) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
     public Product getSingleProduct(Long productId) throws ProductNotFoundException {
+        Product productFromRedis = (Product) redisTemplate.opsForHash().get("PRODUCTS", "PRODUCTS_"+productId);
+        if(productFromRedis != null) {
+            return productFromRedis;
+        }
+
         Optional<Product> p = productRepository.findById(productId);
         if(p.isPresent()) {
+            redisTemplate.opsForHash().put("PRODUCTS", "PRODUCTS_"+productId, p.get());
             return p.get();
         }
         throw new ProductNotFoundException("Product not found");
     }
 
     @Override
-    public List<Product> getProducts() throws ProductNotFoundException {
-        List<Product> products = productRepository.findAll();
+    public Page<Product> getProducts(int pageNumber, int pageSize, String fieldName) throws ProductNotFoundException {
+        Page<Product> products = productRepository.findAll(PageRequest.of(pageNumber, pageSize, Sort.by(fieldName).ascending()));
 
         if (products.isEmpty()) {
             throw new ProductNotFoundException("No products found");
@@ -48,21 +61,13 @@ public class SelfProductService implements ProductService {
         product.setDescription(description);
         product.setPrice(price);
         product.setImageUrl(image);
-
         Category categoryFromDatabase = categoryRepository.findByTitle(category);
-
 
         if (categoryFromDatabase == null) {
             Category newCategory = new Category();
             newCategory.setTitle(category);
-//            categoryFromDatabase = categoryRepository.save(newCategory);
             categoryFromDatabase = newCategory;
-//            category1 = new Category();
-//            category1.setTitle(category);
         }
-
-        // if the category was found from DB -> category1 will be having an ID
-        // else: category1 won't have any ID
         product.setCategory(categoryFromDatabase);
 
         Product savedProduct = productRepository.save(product);
@@ -103,5 +108,15 @@ public class SelfProductService implements ProductService {
 
         product.setCategory(categoryFromDatabase);
         return productRepository.save(product);
+    }
+
+    @Override
+    public List<Product> getProductsInCategory(String title) {
+        Category category = categoryRepository.findByTitle(title);
+        if (category == null) {
+            return new ArrayList<>();
+        }
+
+        return productRepository.findByCategory(category);
     }
 }

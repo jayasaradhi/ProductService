@@ -1,13 +1,15 @@
 package dev.jaya.productservice.services;
 
 import dev.jaya.productservice.exceptions.ProductNotFoundException;
+import dev.jaya.productservice.models.Category;
 import dev.jaya.productservice.models.Product;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
 public interface ProductService {
     Product getSingleProduct(Long productId) throws ProductNotFoundException;
-    List<Product> getProducts() throws ProductNotFoundException;
+    Page<Product> getProducts(int pageNumber, int pageSize, String filedName) throws ProductNotFoundException;
     Product createProduct(String title,
                           String description,
                           String category,
@@ -21,4 +23,5 @@ public interface ProductService {
                           String category,
                           double price,
                           String image) throws ProductNotFoundException;
+    List<Product> getProductsInCategory(String title);
 }

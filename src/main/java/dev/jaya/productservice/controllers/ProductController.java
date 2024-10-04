@@ -6,6 +6,7 @@ import dev.jaya.productservice.models.Product;
 import dev.jaya.productservice.services.FakeStoreProductService;
 import dev.jaya.productservice.services.ProductService;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,8 +36,8 @@ public class ProductController {
     }
 
     @GetMapping("/products")
-    public List<Product> getAllProducts() throws ProductNotFoundException{
-        return productService.getProducts();
+    public Page<Product> getAllProducts(@RequestParam("pageNumber") int pageNumber, @RequestParam("pageSize") int pageSize, @RequestParam("sortBy") String fieldName) throws ProductNotFoundException{
+        return productService.getProducts(pageNumber, pageSize, fieldName);
     }
 
     @GetMapping("/products/categories")
@@ -61,5 +62,10 @@ public class ProductController {
     @DeleteMapping("/products/{id}")
     public Product deleteProduct(@PathVariable("id") Long productId) throws ProductNotFoundException {
         return productService.deleteSingleProduct(productId);
+    }
+
+    @GetMapping("/products/category/{title}")
+    public List<Product> getProductsByCategory(@PathVariable("title") String title){
+        return productService.getProductsInCategory(title);
     }
 }
